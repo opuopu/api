@@ -506,6 +506,7 @@ class UserController {
             'api/v1/u-order-webhook',
           ),
         };
+        console.log(process.env.ORDER_UPAN_URL!);
 
         const dataResponse = await axios.post(
           process.env.ORDER_UPAN_URL!,
@@ -517,7 +518,7 @@ class UserController {
             },
           },
         );
-
+        console.log(dataResponse);
         response.data = {
           payment_url: dataResponse.data.payment_url,
         };
