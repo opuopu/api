@@ -188,7 +188,7 @@ class UserController {
         where: {
           is_active: 1,
         },
-        order: [['sort_order', 'ASC']]
+        order: [['sort_order', 'ASC']],
       });
       response.data = products;
       res.send(response.response);
@@ -217,7 +217,7 @@ class UserController {
         where: {
           product_id,
         },
-        order: [['sort_order', 'ASC']]
+        order: [['sort_order', 'ASC']],
       });
 
       if (product.topup_type === 'voucher') {
@@ -395,7 +395,9 @@ class UserController {
 
       let amount = parseInt(topupPackage.price);
       let buy_price = parseInt(topupPackage.buy_price);
-      let admin_com = parseInt(topupPackage.admin_com) ? parseInt(topupPackage.admin_com) :0 ;
+      let admin_com = parseInt(topupPackage.admin_com)
+        ? parseInt(topupPackage.admin_com)
+        : 0;
 
       let product = await TopupProduct.findByPk(product_id);
 
@@ -448,7 +450,7 @@ class UserController {
           user_id,
           amount,
           buy_price,
-          admin_com
+          admin_com,
         };
       }
 
@@ -465,7 +467,7 @@ class UserController {
         orderData.payment_status = 1;
         const order = await Order.create(orderData);
 
-        if(topupPackage.is_auto){
+        if (topupPackage.is_auto) {
           await this.emitAuto(topupPackage, order);
         }
 
@@ -537,7 +539,7 @@ class UserController {
         is_used: 0,
         package_id: packages.voucher_id,
       },
-      order: [['id', 'DESC']] // Adding order by id descending
+      order: [['id', 'DESC']], // Adding order by id descending
     });
 
     if (voucher) {
@@ -545,21 +547,15 @@ class UserController {
       voucher.is_used = 1;
       await voucher.save();
 
-
       let rdata = {
-        playerid:  order.playerid
-        .split(" ")
-        .join("")
-        .split("-")
-        .join(""),
+        playerid: order.playerid.split(' ').join('').split('-').join(''),
         pacakge: packages.tag,
         code: voucher.data,
         orderid: order.id,
-        url: 'https://apis.topuparea.com/api/v1/completeorder',
+        url: 'https://api.rrrtopup.com/api/v1/completeorder',
       };
       let aaaa = await this.activeserverulr();
       axios.post(aaaa, rdata);
-
     }
     await order.save();
 
@@ -568,32 +564,31 @@ class UserController {
 
   activeserverulr = async () => {
     let activeserver = await PaymentMethod.findAll({
-      where:{
-        is_automated: 2
-      }
+      where: {
+        is_automated: 2,
+      },
     });
 
     let allactiveserver = await PaymentMethod.findAll({
-      where:{
-        status:2
-      }
+      where: {
+        status: 2,
+      },
     });
 
     if (allactiveserver.length == 0) {
-        return 'no_active_server'
+      return 'no_active_server';
     }
-    
+
     if (allactiveserver.length == 1) {
       return allactiveserver[0].name;
-    }else if(activeserver.length==0){
-		const paymentMethod = await PaymentMethod.findByPk(allactiveserver[0].id)
-		if (paymentMethod) {
-			paymentMethod.is_automated = 2;
-			await paymentMethod.save();
-		}
-		return allactiveserver[0].name;
-	}
-	else {
+    } else if (activeserver.length == 0) {
+      const paymentMethod = await PaymentMethod.findByPk(allactiveserver[0].id);
+      if (paymentMethod) {
+        paymentMethod.is_automated = 2;
+        await paymentMethod.save();
+      }
+      return allactiveserver[0].name;
+    } else {
       let nextItem;
       let found = false;
 
@@ -608,7 +603,7 @@ class UserController {
           break; // Found the item, no need to continue the loop
         }
       }
-      
+
       if (found) {
         let singledata = await PaymentMethod.findByPk(nextItem?.id);
         if (singledata) {
@@ -628,25 +623,22 @@ class UserController {
       }
     }
     return activeserver[0].name;
-  }
+  };
 
-  completeorder =  async (req: express.Request, res: express.Response) => {
+  completeorder = async (req: express.Request, res: express.Response) => {
     const response = new responseUtils();
-    const {
-      status,
-      orderid,
-    } = req.body;
-    console.log(orderid)
+    const { status, orderid } = req.body;
+    console.log(orderid);
     let order = await Order.findByPk(orderid);
-    if (status == "success" && order) {
-      order.status = "completed";
+    if (status == 'success' && order) {
+      order.status = 'completed';
       await order.save();
     } else if (order) {
-      order.status = "in_progress";
+      order.status = 'in_progress';
       await order.save();
     }
     return res.send(response.response);
-  }
+  };
 
   emitProductVoucher = async (packages: any, order: any, user: any) => {
     const voucher = await Voucher.findOne({
@@ -948,14 +940,12 @@ class UserController {
       }
 
       if (req.body.status == 'COMPLETED' && order.status == 'pending') {
-        
-
         order.payment_status = 1;
         order.transaction_id = req.body.transaction_id;
         order.phone = req.body.sender_number;
         await order.save();
-        
-        if(packages?.is_auto){
+
+        if (packages?.is_auto) {
           await this.emitAuto(packages, order);
         }
 
